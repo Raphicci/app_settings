@@ -50,9 +50,8 @@ class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware {
   override fun onDetachedFromActivityForConfigChanges() {
     mActivity = null
   }
-
-  override fun onAttachedToEngine(applicationContext: Context, messenger: BinaryMessenger) {
-    val channel = MethodChannel(messenger, "app_settings")
+   override fun onAttachedToEngine(binding: FlutterPluginBinding) {
+    val channel = MethodChannel(binding.getBinaryMessenger(), "app_settings")
     channel.setMethodCallHandler(this)
   }
 
