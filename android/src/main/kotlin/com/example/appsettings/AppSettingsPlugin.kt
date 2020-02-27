@@ -1,24 +1,26 @@
 package com.example.appsettings
 
-import android.content.Intent;
-import android.provider.Settings;
+import android.content.Intent
+import android.provider.Settings
 import android.net.Uri
 
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
+import android.app.Activity
+import android.content.Context
 
-
-class AppSettingsPlugin: MethodCallHandler {
-  /// Private variable to hold instance of Registrar for creating Intents.
-  private var registrar: Registrar
+class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware {
+  private var mActivity: Activity? = null
 
   /// Private method to open device settings window
   private fun openSettings(url: String) {
     try {
-      this.registrar.activity().startActivity(Intent(url))
+      this.mActivity?.startActivity(Intent(url))
     } catch(e:Exception) {
       // Default to APP Settings if setting activity fails to load/be available on device
       openAppSettings()
@@ -28,48 +30,48 @@ class AppSettingsPlugin: MethodCallHandler {
   private fun openAppSettings() {
     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    val uri = Uri.fromParts("package", this.registrar.activity().getPackageName(), null)
-    intent.setData(uri)
-    this.registrar.activity().startActivity(intent)
+    val uri = Uri.fromParts("package", this.mActivity?.packageName, null)
+    intent.data = uri
+    this.mActivity?.startActivity(intent)
   }
 
-  /// Main constructor to setup the Registrar
-  constructor(registrar: Registrar) {
-    this.registrar = registrar
+  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    mActivity = binding.getActivity()
   }
 
-  companion object {
-    @JvmStatic
-    fun registerWith(registrar: Registrar) {
-      val channel = MethodChannel(registrar.messenger(), "app_settings")
-      channel.setMethodCallHandler(AppSettingsPlugin(registrar))
-    }
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    mActivity = binding.getActivity()
   }
+
+  override fun onDetachedFromActivity() {
+    mActivity = null
+  }
+
+  override fun onDetachedFromActivityForConfigChanges() {
+    mActivity = null
+  }
+
+  override fun onAttachedToEngine(applicationContext: Context, messenger: BinaryMessenger) {
+    val channel = MethodChannel(messenger, "app_settings")
+    channel.setMethodCallHandler(this)
+  }
+
+  override fun onDetachedFromEngine(binding: FlutterPluginBinding) {}
 
   /// Handler method to manage method channel calls.
   override fun onMethodCall(call: MethodCall, result: Result) {
-    if (call.method == "wifi") {
-      openSettings(Settings.ACTION_WIFI_SETTINGS)
-    } else if (call.method == "location") {
-      openSettings(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-    } else if (call.method == "security") {
-      openSettings(Settings.ACTION_SECURITY_SETTINGS)
-    } else if (call.method == "bluetooth") {
-      openSettings(Settings.ACTION_BLUETOOTH_SETTINGS)
-    } else if (call.method == "data_roaming") {
-      openSettings(Settings.ACTION_DATA_ROAMING_SETTINGS)
-    } else if (call.method == "date") {
-      openSettings(Settings.ACTION_DATE_SETTINGS)
-    } else if (call.method == "display") {
-      openSettings(Settings.ACTION_DISPLAY_SETTINGS)
-    } else if (call.method == "notification") {
-      openSettings(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-    } else if (call.method == "sound") {
-      openSettings(Settings.ACTION_SOUND_SETTINGS)
-    } else if (call.method == "internal_storage") {
-      openSettings(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)
-    } else if (call.method == "app_settings") {
-      openAppSettings()
+    when (call.method) {
+        "wifi" -> openSettings(Settings.ACTION_WIFI_SETTINGS)
+        "location" -> openSettings(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        "security" -> openSettings(Settings.ACTION_SECURITY_SETTINGS)
+        "bluetooth" -> openSettings(Settings.ACTION_BLUETOOTH_SETTINGS)
+        "data_roaming" -> openSettings(Settings.ACTION_DATA_ROAMING_SETTINGS)
+        "date" -> openSettings(Settings.ACTION_DATE_SETTINGS)
+        "display" -> openSettings(Settings.ACTION_DISPLAY_SETTINGS)
+        "notification" -> openSettings(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+        "sound" -> openSettings(Settings.ACTION_SOUND_SETTINGS)
+        "internal_storage" -> openSettings(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)
+        "app_settings" -> openAppSettings()
     }
   }
 }
