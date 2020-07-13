@@ -4,11 +4,11 @@ import UIKit
 /// Swift app settings plugin with method channel call handler.
 public class SwiftAppSettingsPlugin: NSObject, FlutterPlugin {
   /// Private method to open device settings window
-  private func openSettings(result: FlutterResult) {
+  private func openSettings(result: @escaping FlutterResult) {
       if let url = URL(string: UIApplication.openSettingsURLString) {
         if #available(iOS 10.0, *) {
             UIApplication.shared.open(url, options: [:], completionHandler: { (success) in
-              result(nil);
+              result(nil)
             })
         } else {
             UIApplication.shared.openURL(url)
