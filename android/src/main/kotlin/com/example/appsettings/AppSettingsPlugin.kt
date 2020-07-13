@@ -17,11 +17,12 @@ import android.content.Context
 
 class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware {
   private var mActivity: Activity? = null
+  private var _result: Result? = null
 
   /// Private method to open device settings window
   private fun openSettings(url: String) {
     try {
-      this.mActivity?.startActivity(Intent(url))
+      this.mActivity?.startActivity(Intent(url), 1234)
     } catch(e:Exception) {
       // Default to APP Settings if setting activity fails to load/be available on device
       openAppSettings()
@@ -33,7 +34,13 @@ class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware {
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     val uri = Uri.fromParts("package", this.mActivity?.packageName, null)
     intent.data = uri
-    this.mActivity?.startActivity(intent)
+    this.mActivity?.startActivity(intent, 1234)
+  }
+
+  override fun onActivityResult(requestCode: Int, result: Int, intent: Intent?) {
+      if (requestCode != 1234)
+          return super.onActivityResult(requestCode, result, intent)
+     _result?.success(null)
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -61,6 +68,7 @@ class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware {
 
   /// Handler method to manage method channel calls.
   override fun onMethodCall(call: MethodCall, result: Result) {
+    _result = result;
     when (call.method) {
         "wifi" -> openSettings(Settings.ACTION_WIFI_SETTINGS)
         "location" -> openSettings(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
