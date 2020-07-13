@@ -8,7 +8,7 @@ public class SwiftAppSettingsPlugin: NSObject, FlutterPlugin {
       if let url = URL(string: UIApplication.openSettingsURLString) {
         if #available(iOS 10.0, *) {
             UIApplication.shared.open(url, options: [:], completionHandler: { (success) in
-              result.success(nil);
+              result(nil);
             })
         } else {
             UIApplication.shared.openURL(url)
