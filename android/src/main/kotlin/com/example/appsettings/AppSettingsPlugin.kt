@@ -15,14 +15,14 @@ import io.flutter.plugin.common.MethodChannel.Result
 import android.app.Activity
 import android.content.Context
 
-class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware {
+class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware, PluginRegistry.ActivityResultListener  {
   private var mActivity: Activity? = null
   private var _result: Result? = null
 
   /// Private method to open device settings window
   private fun openSettings(url: String) {
     try {
-      this.mActivity?.startActivity(Intent(url), 1234)
+      this.mActivity?.startActivityForResult(Intent(url), 1234)
     } catch(e:Exception) {
       // Default to APP Settings if setting activity fails to load/be available on device
       openAppSettings()
@@ -34,21 +34,26 @@ class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware {
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     val uri = Uri.fromParts("package", this.mActivity?.packageName, null)
     intent.data = uri
-    this.mActivity?.startActivity(intent, 1234)
+    this.mActivity?.startActivityForResult(intent, 1234)
   }
 
-  override fun onActivityResult(requestCode: Int, result: Int, intent: Intent?) {
-      if (requestCode != 1234)
-          return super.onActivityResult(requestCode, result, intent)
-     _result?.success(null)
+  override fun onActivityResult(requestCode: Int, result: Int, intent: Intent?): Boolean {
+      if (requestCode == 1234) {
+          _result?.success(null)
+          return true
+      }
+      return false
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     mActivity = binding.getActivity()
+      binding.addActivityResultListener(this)
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
     mActivity = binding.getActivity()
+      binding.removeActivityResultListener(this)
+      binding.addActivityResultListener(this)
   }
 
   override fun onDetachedFromActivity() {
