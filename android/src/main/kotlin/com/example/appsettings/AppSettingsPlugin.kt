@@ -12,10 +12,11 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
 import android.app.Activity
 import android.content.Context
 
-class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware, PluginRegistry.ActivityResultListener  {
+class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware, ActivityResultListener  {
   private var mActivity: Activity? = null
   private var _result: Result? = null
 
