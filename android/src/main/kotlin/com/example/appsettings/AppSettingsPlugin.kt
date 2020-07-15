@@ -13,12 +13,16 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
+
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 
 class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware, ActivityResultListener  {
   private var mActivity: Activity? = null
   private var _result: Result? = null
+  private var handler = Handler(Looper.getMainLooper());
 
   /// Private method to open device settings window
   private fun openSettings(url: String) {
@@ -32,7 +36,6 @@ class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware, Activi
 
   private fun openAppSettings() {
     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     val uri = Uri.fromParts("package", this.mActivity?.packageName, null)
     intent.data = uri
     this.mActivity?.startActivityForResult(intent, 1234)
@@ -40,21 +43,20 @@ class AppSettingsPlugin: MethodCallHandler, FlutterPlugin, ActivityAware, Activi
 
   override fun onActivityResult(requestCode: Int, result: Int, intent: Intent?): Boolean {
       if (requestCode == 1234) {
-          _result?.success(null)
-          return true
+          handler.post { _result?.success(null) }
+          return false
       }
-      return false
+      return true
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     mActivity = binding.getActivity()
-      binding.addActivityResultListener(this)
+    binding.addActivityResultListener(this)
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
     mActivity = binding.getActivity()
-      binding.removeActivityResultListener(this)
-      binding.addActivityResultListener(this)
+    binding.addActivityResultListener(this)
   }
 
   override fun onDetachedFromActivity() {
